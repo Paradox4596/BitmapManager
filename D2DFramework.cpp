@@ -1,6 +1,7 @@
 #include "D2DFramework.h"
 
-#pragma comment (lib, "d2d1.lib")
+#pragma comment (lib,"d2d1.lib")
+#pragma comment (lib, "WindowsCodecs.lib")
 
 HRESULT D2DFramework::InitWindow(HINSTANCE hInstance, LPCWSTR title, UINT w, UINT h)
 {
@@ -20,18 +21,18 @@ HRESULT D2DFramework::InitWindow(HINSTANCE hInstance, LPCWSTR title, UINT w, UIN
         return E_FAIL;
     }
 
-    RECT wr = { 0, 0, static_cast<LONG>(w),static_cast<LONG>(h) };
+    RECT wr = { 0, 0, static_cast<LONG>(w), static_cast<LONG>(h) };
     AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
     hwnd = CreateWindowEx(NULL, gClassName, title,
-        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
-        CW_USEDEFAULT, wr.right - wr.left,
-        wr.bottom - wr.top, NULL,
+        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+        wr.right - wr.left, wr.bottom - wr.top, NULL,
         NULL, hInstance, NULL);
 
     if (hwnd == nullptr)
     {
         return E_FAIL;
     }
+
     mHwnd = hwnd;
 
     SetWindowLongPtr(mHwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
@@ -43,21 +44,27 @@ HRESULT D2DFramework::InitD2D(HWND hwnd)
 {
     HRESULT hr;
 
+    hr = ::CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(mspWICFactory.GetAddressOf()));
+
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, mspD2DFactory.GetAddressOf());
     ThrowIfFailed(hr);
 
     hr = CreateDeviceResources();
-    return hr;
+
+    return S_OK;
 }
 
 HRESULT D2DFramework::CreateDeviceResources()
 {
+    mspRenderTarget.Reset();
+
     RECT wr;
     GetClientRect(mHwnd, &wr);
     HRESULT hr = mspD2DFactory->CreateHwndRenderTarget(
         D2D1::RenderTargetProperties(),
         D2D1::HwndRenderTargetProperties(mHwnd, D2D1::SizeU(wr.right - wr.left, wr.bottom - wr.top)),
-        mspRenderTarget.ReleaseAndGetAddressOf());
+        mspRenderTarget.ReleaseAndGetAddressOf()
+    );
 
     ThrowIfFailed(hr);
 
@@ -67,12 +74,8 @@ HRESULT D2DFramework::CreateDeviceResources()
 HRESULT D2DFramework::Initialize(HINSTANCE hInstance, LPCWSTR title, UINT w, UINT h)
 {
     ThrowIfFailed(CoInitialize(nullptr));
-
-    ThrowIfFailed(InitWindow(hInstance, title, w, h), "Failed To InitWindow!");
-    ThrowIfFailed(InitD2D(mHwnd), "Failed to InitD2D");
-
-    HRESULT hr = BitmapManager::Instance().Initialize(mspRenderTarget.Get());
-    ThrowIfFailed(hr, "Failed to BitmapManager Initialize");
+    ThrowIfFailed(InitWindow(hInstance, title, w, h));
+    ThrowIfFailed(InitD2D(mHwnd));
 
     ShowWindow(mHwnd, SW_SHOW);
     UpdateWindow(mHwnd);
@@ -85,6 +88,7 @@ void D2DFramework::Release()
 
     mspRenderTarget.Reset();
     mspD2DFactory.Reset();
+    mspWICFactory.Reset();
 
     CoUninitialize();
 }

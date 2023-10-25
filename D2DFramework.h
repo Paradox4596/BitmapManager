@@ -1,26 +1,33 @@
 #pragma once
-
+#include <wincodec.h>
 #include <d2d1.h>
 #include <wrl/client.h>
-#include "com_exception.h"
-#include "BitmapManager.h"
+#include <com_exception.h>
+
+
 
 class D2DFramework
 {
 private:
 	const LPCWSTR gClassName{ L"MyWindowClass" };
+
 protected:
 	HWND mHwnd{};
+
 protected:
+	Microsoft::WRL::ComPtr<IWICImagingFactory> mspWICFactory{};
 	Microsoft::WRL::ComPtr<ID2D1Factory> mspD2DFactory{};
 	Microsoft::WRL::ComPtr<ID2D1HwndRenderTarget> mspRenderTarget{};
+
 protected:
-	HRESULT InitWindow(HINSTANCE hInstance, LPCWSTR title = L"D2DFramework", UINT  w = 1024, UINT h = 768);
+	HRESULT InitWindow(HINSTANCE hInstance, LPCWSTR title = L"D2DFramework", UINT w = 1024, UINT h = 768);
 	virtual HRESULT InitD2D(HWND hwnd);
 	virtual HRESULT CreateDeviceResources();
 public:
 	virtual HRESULT Initialize(HINSTANCE hInstance, LPCWSTR title = L"D2DFramework", UINT  w = 1024, UINT h = 768);
 
+public:
+	virtual HRESULT Initialize(HINSTANCE hInstance, LPCWSTR title = L"D2DFramework", UINT w = 1024, UINT h = 768);
 	virtual void Release();
 	virtual int GameLoop();
 	virtual void Render();
@@ -28,10 +35,16 @@ public:
 	void ShowError(LPCWSTR msg, LPCWSTR title = L"error");
 
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+
 public:
 	inline ID2D1HwndRenderTarget* GetRenderTarget()
 	{
 		return mspRenderTarget.Get();
+	}
+
+	inline IWICImagingFactory* GetWICFactory()
+	{
+		return mspWICFactory.Get();
 	}
 
 	inline ID2D1Factory* GetD2DFactory()

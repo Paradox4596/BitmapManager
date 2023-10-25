@@ -10,6 +10,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
     {
         D2DFramework myFramework;
 
+
         myFramework.Initialize(hInstance, L"Framework", 1024, 768);
 
         int ret = myFramework.GameLoop();
@@ -18,6 +19,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
 
         return ret;
     }
+
     catch (const com_exception& e)
     {
         OutputDebugStringA(e.what());
@@ -25,4 +27,5 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance,
     }
 
     return 0;
+
 }
